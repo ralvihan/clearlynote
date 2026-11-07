@@ -1,0 +1,259 @@
+<!-- #Tentang -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#7A1F3D">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>Tentang - Clearlynote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body data-page="tentang" data-base="../">
+
+<section id="login" class="login hidden">
+  <div class="login-card">
+    <img class="logo" src="/logo_clearlynote.svg" alt="" width="34" height="34">
+    <h1>Clearly<b>note</b></h1>
+    <p>Catat semua hutang, pantau cicilan dan denda, dan lihat berapa lagi yang harus dilunasi.</p>
+    <button id="btnLogin" class="primary">Masuk dengan Google</button>
+    <div id="loginErr"></div>
+  </div>
+</section>
+
+<div id="app" class="shell hidden">
+  <header class="topbar">
+    <div class="brand"><img class="logo" src="/logo_clearlynote.svg" alt="" width="34" height="34"><span>Clearly<b>note</b></span></div>
+    <div class="me">
+      <button type="button" id="btnMenu" class="mebtn" aria-haspopup="true" aria-expanded="false" aria-controls="menu">
+        <img id="uimg" class="hidden" alt="" referrerpolicy="no-referrer">
+        <span id="uav" class="av hidden"></span>
+        <b id="uname"></b>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div id="menu" class="menu hidden" role="menu">
+        <div class="menu-head"><b id="mname"></b><small id="mmail"></small></div>
+        <a id="miAbout" class="mi" role="menuitem" href="tentang/"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.1"/></svg>Tentang &amp; panduan</a>
+        <button type="button" id="btnLogout" class="mi out" role="menuitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Keluar</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div id="pageHome">
+    <header class="head">
+      <div>
+        <p id="today" class="today"></p>
+        <h1 id="greet">Halo</h1>
+        <p class="sub">Semua hutangmu dalam satu buku, hanya kamu yang bisa membukanya.</p>
+      </div>
+      <button id="btnAdd" class="primary">Tambah hutang</button>
+    </header>
+    <section id="alerts"></section>
+    <section id="stats" class="bento"></section>
+    <div class="listbar">
+      <h2 id="listTitle" class="listhead">Hutang aktif</h2>
+      <div class="seg">
+        <button class="segb active" data-tab="aktif">Aktif<b id="cAktif">0</b></button>
+        <button class="segb" data-tab="lunas">Lunas<b id="cLunas">0</b></button>
+      </div>
+    </div>
+    <section id="list" class="ledger"></section>
+    </div>
+    <section id="pageForm" class="formpage hidden">
+      <button type="button" class="link back" data-back><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Kembali ke daftar</button>
+      <h1 id="fTitle" class="ftitle">Tambah hutang</h1>
+      <div id="draftNote" class="draftnote hidden"><span>Draf terakhir dipulihkan, lanjutkan mengisi.</span><button type="button" class="link" id="btnDraftClear">Mulai dari awal</button></div>
+      <form id="fDebt" class="fgrid" novalidate>
+        <div class="fcard">
+        <label for="fType">Jenis hutang</label>
+        <select id="fType">
+          <option value="bunga">Berbunga atau berdenda (pinjol, bank, kredit)</option>
+          <option value="biasa">Tanpa bunga dan denda (warung, teman, saudara)</option>
+        </select>
+        <div class="two">
+          <div>
+            <label for="fSource">Asal hutang</label>
+            <select id="fSource">
+              <option value="Pinjol / aplikasi">Pinjol / aplikasi</option>
+              <option value="Bank / leasing">Bank / leasing</option>
+              <option value="Warung / toko">Warung / toko</option>
+              <option value="Teman">Teman</option>
+              <option value="Saudara">Saudara</option>
+              <option value="Orang terdekat">Orang terdekat</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label for="fLender">Nama aplikasi atau pemberi hutang</label>
+            <input id="fLender" list="dlLender" required maxlength="80" autocomplete="off" placeholder="Contoh: Kredivo, Warung Bu Ani">
+            <datalist id="dlLender"></datalist>
+          </div>
+        </div>
+        <div id="boxBunga">
+          <div class="two">
+            <div>
+              <label for="fPrincipal">Pokok pinjaman (Rp)</label>
+              <input id="fPrincipal" class="money" type="text" inputmode="numeric" placeholder="0">
+            </div>
+            <div>
+              <label for="fTotal">Total yang harus dibayar (Rp)</label>
+              <input id="fTotal" class="money" type="text" inputmode="numeric" placeholder="0" required>
+            </div>
+          </div>
+          <div class="two">
+            <div>
+              <label for="fUnit">Jarak antar cicilan</label>
+              <select id="fUnit">
+                <option value="hari">Harian</option>
+                <option value="minggu">Mingguan</option>
+                <option value="bulan" selected>Bulanan</option>
+              </select>
+            </div>
+            <div>
+              <label for="fTenor" id="lTenor">Lama cicilan (bulan)</label>
+              <input id="fTenor" type="number" min="1" max="60" step="1" inputmode="numeric" placeholder="3">
+            </div>
+          </div>
+          <label for="fMode">Besar cicilan</label>
+          <select id="fMode">
+            <option value="sama">Sama tiap cicilan</option>
+            <option value="beda">Beda tiap cicilan</option>
+          </select>
+          <label for="fTaken">Tanggal pinjam (opsional)</label>
+          <input id="fTaken" type="date">
+          <label for="fStart">Jatuh tempo pertama</label>
+          <input id="fStart" type="date">
+          <div class="two">
+            <div>
+              <label for="fFineMode">Denda keterlambatan</label>
+              <select id="fFineMode">
+                <option value="nominal">Nominal per hari (Rp)</option>
+                <option value="persen">Persen per hari dari sisa tagihan</option>
+                <option value="flat">Nominal tetap per tagihan telat (sekali per tagihan)</option>
+              </select>
+            </div>
+            <div>
+              <label for="fFine" id="lFine">Besar denda per hari (Rp)</label>
+              <input id="fFine" class="money" type="text" inputmode="numeric" placeholder="0">
+            </div>
+          </div>
+          <label for="fWarn">Peringatan merah jika telat lebih dari (hari)</label>
+          <input id="fWarn" type="number" min="1" step="1" inputmode="numeric" value="7">
+        </div>
+        <div id="boxBiasa" class="hidden">
+          <label for="fNominal">Nominal hutang (Rp)</label>
+          <input id="fNominal" class="money" type="text" inputmode="numeric" placeholder="0">
+          <label for="fDue">Janji bayar (opsional)</label>
+          <input id="fDue" type="date">
+        </div>
+        <label for="fNote">Catatan (opsional)</label>
+        <textarea id="fNote" maxlength="500"></textarea>
+        <p id="fMsg" class="fmsg hidden"></p>
+        <div class="actions desk">
+          <button type="button" class="ghost" data-cancel>Batal</button>
+          <button type="submit" class="primary">Simpan</button>
+        </div>
+        </div>
+        <aside id="fSide" class="fside">
+          <div class="fcard">
+            <h3 class="sidetitle">Rincian cicilan</h3>
+            <div id="sched" class="sched"></div>
+            <p class="hint">Pilih "Beda tiap cicilan" kalau cicilannya nggak rata, misal 700.000, 150.000, 150.000. Total dihitung otomatis dari rincian.</p>
+            <div id="sum" class="sum"></div>
+          </div>
+        </aside>
+        <div class="actions mob">
+          <button type="button" class="ghost" data-cancel>Batal</button>
+          <button type="submit" class="primary">Simpan</button>
+        </div>
+      </form>
+    </section>
+    <section id="pageAbout" class="formpage about hidden">
+      <button type="button" class="link back" data-back><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Kembali ke daftar</button>
+      <h1 class="ftitle">Tentang Clearlynote</h1>
+      <div class="agrid">
+        <div class="acol">
+          <div class="fcard">
+            <h2>Apa itu Clearlynote</h2>
+            <p>Clearlynote adalah buku catatan hutang pribadi. Kamu bisa mencatat hutang dari pinjol, bank, warung, sampai teman, lalu memantau cicilan, jatuh tempo, denda, dan berapa lagi yang harus dilunasi.</p>
+          </div>
+          <div class="fcard">
+            <h2>Cara pakai</h2>
+            <ol>
+              <li>Tekan <b>Tambah hutang</b>, pilih jenisnya, lalu isi pemberi hutang, total, lama cicilan, dan jatuh tempo pertama.</li>
+              <li>Tiap kali bayar, buka hutangnya lalu tekan <b>Catat pembayaran</b>.</li>
+              <li>Pantau dashboard. Hutang yang sudah dibayar penuh pindah ke tab <b>Lunas</b>.</li>
+            </ol>
+          </div>
+          <div class="fcard">
+            <h2>Arti angka di dashboard</h2>
+            <ul>
+              <li><b>Sisa hutang.</b> Total yang belum dibayar dari semua hutang aktif, tanpa denda.</li>
+              <li><b>Denda berjalan.</b> Denda keterlambatan yang sedang berjalan, terpisah dari sisa hutang.</li>
+              <li><b>Total terbayar.</b> Jumlah semua pembayaran yang sudah kamu catat.</li>
+              <li><b>Hutang lunas.</b> Jumlah hutang yang sudah dibayar penuh.</li>
+              <li><b>Progres pelunasan.</b> Persentase total terbayar dibanding total semua hutang. "Tinggal ... lagi" sudah termasuk denda.</li>
+              <li><b>Aktif, Lunas, Telat.</b> Jumlah hutang di tiap kondisi.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="acol">
+          <div class="fcard">
+            <h2>Cara hitung cicilan dan denda</h2>
+            <ul>
+              <li><b>Jenis hutang.</b> "Berbunga atau berdenda" punya jadwal cicilan (harian, mingguan, atau bulanan) dan denda. "Tanpa bunga dan denda" hanya satu nominal dengan janji bayar yang boleh dikosongkan.</li>
+              <li><b>Jatuh tempo.</b> Jatuh tempo cicilan berikutnya mengikuti tanggal jatuh tempo pertama, sesuai jarak yang kamu pilih: harian, mingguan, atau bulanan. Untuk bayar sekali saja, isi lama cicilan 1.</li>
+              <li><b>Pembayaran.</b> Boleh dibayar kurang dari tagihan. Kalau lebih, kelebihannya otomatis menutup tagihan berikutnya.</li>
+              <li><b>Pinjam lagi.</b> Kalau kamu pinjam lagi di aplikasi yang sama saat yang lama masih jalan, buka hutangnya lalu tekan <b>Pinjam lagi</b>. Pinjaman baru punya jadwal cicilan dan denda sendiri, tapi masuk ke satu catatan. Pembayaran otomatis menutup tagihan yang paling lama telat dulu, dari pinjaman mana pun.</li>
+              <li><b>Telat.</b> Dihitung mulai sehari setelah tanggal jatuh tempo. Di hari jatuh tempo itu sendiri belum dianggap telat.</li>
+              <li><b>Denda.</b> Besarnya sesuai yang kamu isi: nominal per hari, persen per hari dari sisa tagihan, atau nominal tetap yang dikenakan sekali untuk setiap tagihan yang telat (berapa pun lamanya telat). Denda dihitung dari kondisi hari ini. Kalau tagihannya sudah dibayar, denda untuk tagihan itu tidak dihitung lagi dan tidak tersimpan sebagai riwayat.</li>
+              <li><b>Peringatan merah.</b> Muncul kalau telatnya lebih lama dari batas hari yang kamu atur. Sebelum itu peringatannya kuning.</li>
+            </ul>
+          </div>
+          <div class="fcard">
+            <h2>Data kamu</h2>
+            <p>Catatan disimpan per akun dan dibuka lewat login. Kalau kamu keluar, kamu perlu masuk lagi untuk membuka catatan hutangmu.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="pageDetail" class="formpage hidden">
+      <button type="button" class="link back" data-back><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Kembali ke daftar</button>
+      <div id="detail"></div>
+    </section>
+  </main>
+</div>
+
+<dialog id="dPay">
+  <form id="fPay" class="dlg">
+    <h2>Catat pembayaran</h2>
+    <p id="payInfo" class="mini"></p>
+    <label for="pAmount">Jumlah dibayar (Rp)</label>
+    <input id="pAmount" class="money" type="text" inputmode="numeric" required>
+    <p class="hint">Boleh kurang dari tagihan. Kalau lebih, sisanya otomatis menutup tagihan berikutnya.</p>
+    <div class="two">
+      <div>
+        <label for="pDate">Tanggal bayar</label>
+        <input id="pDate" type="date" required>
+      </div>
+      <div>
+        <label for="pNote">Catatan (opsional)</label>
+        <input id="pNote" maxlength="120">
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" class="ghost" id="btnFull">Isi sisa hutang</button>
+      <button type="button" class="ghost" data-close="dPay">Batal</button>
+      <button type="submit" class="primary">Simpan pembayaran</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="../app.js"></script>
+</body>
+</html>
