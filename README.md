@@ -1,5 +1,7 @@
 # Clearlynote
 
+![Clearlynote](docs/logo_clearlynote.svg)
+
 A personal debt notebook. Track debts, installments, due dates, and late fines.
 
 Demo: https://clearlynote.web.app
