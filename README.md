@@ -1,7 +1,7 @@
 # Clearlynote
 
 <p align="center">
-  <img src="logo_clearlynote.svg" width="80" alt="Clearlynote">
+  <img src="favicon.svg" width="80" alt="Clearlynote">
 </p>
 
 A personal debt notebook. Track debts, installments, due dates, and late fines.
