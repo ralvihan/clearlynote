@@ -10,16 +10,13 @@ Demo: https://clearlynote.web.app
 
 Built with HTML, CSS, JavaScript, and Firebase (Auth, Firestore, Hosting).
 
-## Run
+## Features
 
-1. Fill in `firebaseConfig` in `app.js` with your own Firebase project config.
-2. Run `npx serve .`
-
-## Deploy
-
-```
-firebase deploy --only hosting
-```
+- Track debts from loan apps, banks, shops, and friends
+- Daily, weekly, or monthly installment schedules
+- Automatic late fine calculation
+- Payment history and repayment progress
+- Private data per account
 
 ## License
 
