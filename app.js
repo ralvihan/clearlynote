@@ -318,7 +318,118 @@ function renderSkeleton() {
   const sk = c => `<div class="b ${c} sk"><div class="skl w50"></div><div class="skl med"></div><div class="skl w60"></div></div>`;
   $("#stats").innerHTML = ["b-s", "b-s", "b-s", "b-s", "b-chart", "b-profile", "b-gauge", "b-list", "b-wallet"].map(sk).join("");
   $("#alerts").innerHTML = "";
+  prioEl().innerHTML = "";
   $("#list").innerHTML = `<div class="skrow"><div class="skl"></div></div><div class="skrow"><div class="skl"></div></div><div class="skrow"><div class="skl"></div></div>`;
+}
+
+const PRIO_KEY = id => `clearly:budget:${id}`;
+let budget = 0;
+
+const lateCost = (l, sisa) => l.fineMode === "persen" ? { day: sisa * (l.fineValue || 0) / 100, once: 0 } : l.fineMode === "flat" ? { day: 0, once: l.fineValue || 0 } : { day: l.fineValue || 0, once: 0 };
+const lateCostText = k => k.once > 0 ? `${rp(k.once)} sekali kena` : k.day > 0 ? `${rp(k.day)} per hari` : "";
+
+function prioOf(list) {
+  const today = startOfToday();
+  const items = list.filter(x => !x.c.done).map(({ d, c }) => {
+    const bunga = d.type === "bunga";
+    const lateRows = c.rows.filter(r => r.sisa > 0 && r.late > 0);
+    const soonRows = c.rows.filter(r => r.sisa > 0 && !r.late && r.due && Math.round((r.due - today) / DAY) <= 7);
+    const burn = bunga ? lateRows.reduce((a, r) => a + lateCost(r.loan, r.sisa).day, 0) : 0;
+    const risk = bunga ? soonRows.reduce((a, r) => { const k = lateCost(r.loan, r.sisa); return { day: a.day + k.day, once: a.once + k.once }; }, { day: 0, once: 0 }) : { day: 0, once: 0 };
+    const must = [...lateRows, ...soonRows].reduce((a, r) => a + r.sisa, 0);
+    const tier = bunga && c.crit ? 0 : lateRows.length ? (bunga ? 1 : 2) : soonRows.length ? (bunga ? 3 : 4) : 5;
+    return { d, c, bunga, burn, risk, must, tier, rest: must === 0 && c.next ? c.next.sisa : 0, alloc: 0, extra: 0 };
+  });
+  items.sort((a, b) => a.tier - b.tier || b.burn - a.burn || b.c.maxLate - a.c.maxLate || (a.c.next?.due || 9e15) - (b.c.next?.due || 9e15) || a.c.sisa - b.c.sisa);
+  let left = budget;
+  items.forEach(it => { it.alloc = Math.min(it.must, left); left -= it.alloc; });
+  items.forEach(it => { it.extra = Math.min(it.rest, left); left -= it.extra; });
+  return { items, left };
+}
+
+function reasonOf(it) {
+  const { c } = it;
+  if (it.tier <= 2) {
+    const base = `Telat ${c.maxLate} hari`;
+    if (!it.bunga) return `${base}. Tanpa denda, tapi lebih baik segera dilunasi atau dikabari.`;
+    const lim = it.tier === 0 ? `, sudah lewat batas ${c.limit} hari` : "";
+    return `${base}${lim}. Denda sekarang ${rp(c.fine)}${it.burn > 0 ? `, nambah ${rp(it.burn)} tiap hari` : ", tidak nambah lagi"}.`;
+  }
+  if (it.tier <= 4) {
+    const when = c.diff <= 0 ? "hari ini" : `${c.diff} hari lagi`;
+    const t = lateCostText(it.risk);
+    return `Jatuh tempo ${when}.${it.bunga && t ? ` Kalau telat kena denda ${t}.` : ""}`;
+  }
+  return `Jatuh tempo ${c.next && c.next.due ? fmtD(c.next.due) : "belum ditentukan"}. Belum mendesak.`;
+}
+
+let prioOpen = false;
+const PRIO_TOP = 3;
+const LIST_TOP = 5;
+const listOpen = { aktif: false, lunas: false };
+
+function prioBody(p) {
+  const { items, left } = p;
+  if (!items.length) return `<p class="mute pad">Belum ada hutang aktif untuk diprioritaskan.</p>`;
+  const urgent = items.reduce((a, x) => a + x.must, 0);
+  const sum = budget > 0
+    ? `<div class="psum ${budget >= urgent ? "" : "bad"}"><span>Butuh untuk yang mendesak<b>${rp(urgent)}</b></span><span>Dana kamu<b>${rp(budget)}</b></span><span>${budget >= urgent ? "Sisa dana" : "Kurang"}<b>${rp(budget >= urgent ? left : urgent - budget)}</b></span></div>`
+    : urgent > 0
+      ? `<p class="pinfo">Yang mendesak sekarang <b>${rp(urgent)}</b> (telat dan jatuh tempo 7 hari ke depan). Isi dana untuk lihat pembagiannya.</p>`
+      : `<p class="pinfo">Tidak ada tagihan yang mendesak. Tinggal jaga jatuh tempo berikutnya.</p>`;
+  const shown = prioOpen ? items : items.slice(0, PRIO_TOP);
+  const rows = shown.map((it, i) => {
+    const tone = it.tier <= 1 ? "bad" : it.tier <= 4 ? "warn" : "ok";
+    const act = it.must > 0 ? `<b>${rp(it.must)}</b><small>harus dibayar</small>` : it.rest > 0 ? `<b>${rp(it.rest)}</b><small>tagihan berikutnya</small>` : "";
+    let cover = "";
+    if (budget > 0) {
+      const w = it.must > 0 ? it.must : it.rest;
+      const a = it.must > 0 ? it.alloc : it.extra;
+      if (w > 0) cover = a >= w ? `<em class="chip ok">Tercover</em>` : a > 0 ? `<em class="chip warn">Bayar ${rp(a)} dulu</em>` : `<em class="chip bad">Belum kebagian</em>`;
+    }
+    return `<button type="button" class="pr ${tone}" data-open="${esc(it.d.id)}"><span class="pn">${i + 1}</span><span class="pw"><b>${esc(it.d.lender)}</b><small>${esc(reasonOf(it))}</small></span><span class="pa">${act}${cover}</span></button>`;
+  }).join("");
+  const more = items.length > PRIO_TOP
+    ? `<button type="button" class="pmore" data-prioall>${prioOpen ? "Tampilkan lebih sedikit" : `Lihat semua ${items.length} hutang`}</button>`
+    : "";
+  const note = prioOpen ? `<p class="pnote">Urutan ini saran dari data yang kamu catat. Pembayaran otomatis menutup tagihan yang paling lama telat dulu.</p>` : "";
+  return `${sum}<div class="plist">${rows}</div>${more}${note}`;
+}
+
+function prioHTML(list) {
+  const p = prioOf(list);
+  return `<div class="b b-prio">
+      <div class="phead">
+        <div class="ptitle">
+          <div class="b-head"><h3>Prioritas bayar</h3><span class="chip">${p.items.length} hutang aktif</span></div>
+          <p class="mute">Urut dari yang paling perlu dibayar duluan: telat dan denda paling cepat nambah, lalu jatuh tempo terdekat.</p>
+        </div>
+        <div class="bud"><label for="budget">Dana yang kamu punya (Rp, opsional)</label><input id="budget" class="money" type="text" inputmode="numeric" placeholder="0" value="${fmt(budget)}"></div>
+      </div>
+      <div id="prioBody">${prioBody(p)}</div>
+    </div>`;
+}
+
+function prioEl() {
+  let el = $("#prio");
+  if (!el) {
+    el = document.createElement("section");
+    el.id = "prio";
+    el.className = "prio";
+    $("#stats").after(el);
+  }
+  return el;
+}
+
+function renderPrioBody() {
+  const box = $("#prioBody");
+  if (box) box.innerHTML = prioBody(prioOf(debts.map(d => ({ d, c: calc(d) }))));
+}
+
+function setBudget(v) {
+  budget = v;
+  if (uid) LS.set(PRIO_KEY(uid), v);
+  renderPrioBody();
 }
 
 function renderAll() {
@@ -375,6 +486,8 @@ function renderAll() {
       <div class="wtx"><h3>Semua hutang, satu buku</h3><p class="mute">Catat cicilan, pantau jatuh tempo, dan lunasi satu per satu sampai bersih. Clearlynote bantu kamu tetap tahu mana yang harus dibayar lebih dulu.</p></div>
       ${WALLET_SVG}
     </div>`;
+  if (document.activeElement?.id === "budget") renderPrioBody();
+  else prioEl().innerHTML = prioHTML(list);
   $("#cAktif").textContent = active.length;
   $("#cLunas").textContent = done.length;
   $("#listTitle").textContent = tab === "aktif" ? "Hutang aktif" : "Sudah lunas";
@@ -396,7 +509,9 @@ function renderAll() {
     ? (b.c.maxLate - a.c.maxLate) || ((a.c.next?.due || 9e15) - (b.c.next?.due || 9e15))
     : (b.c.lastPay || "").localeCompare(a.c.lastPay || ""));
   const head = `<div class="lh"><span>Pemberi hutang</span><span>${tab === "aktif" ? "Jatuh tempo" : "Lunas pada"}</span><span>Tagihan</span><span>Sisa</span><span>Terbayar</span><span>Status</span></div>`;
-  $("#list").innerHTML = shown.length ? head + shown.map(({ d, c }) => {
+  const open = listOpen[tab];
+  const rowsShown = open ? shown : shown.slice(0, LIST_TOP);
+  $("#list").innerHTML = shown.length ? head + rowsShown.map(({ d, c }) => {
     const [st, cls] = statusOf(d, c);
     return `<button class="lr" data-open="${esc(d.id)}">
       <span class="who"><b>${esc(d.lender)}</b><small>${esc(d.source)}${c.multi ? ` · ${c.loans.length} pinjaman` : ""}</small></span>
@@ -406,7 +521,7 @@ function renderAll() {
       <span data-l="Terbayar"><div class="bar"><i class="${c.done ? "full" : ""}" style="width:${c.pct}%"></i></div><small>${rp(c.paid)} dari ${rp(c.total)}</small></span>
       <span class="st ${cls}">${st}</span>
     </button>`;
-  }).join("") : `<div class="empty"><b>${tab === "aktif" ? "Belum ada hutang aktif" : "Belum ada yang lunas"}</b>${tab === "aktif" ? "Tekan Tambah hutang untuk mulai mencatat." : "Hutang yang sudah lunas akan muncul di sini."}</div>`;
+  }).join("") + (shown.length > LIST_TOP ? `<button type="button" class="lmore" data-listall>${open ? "Tampilkan lebih sedikit" : `Lihat semua ${shown.length} hutang`}</button>` : "") : `<div class="empty"><b>${tab === "aktif" ? "Belum ada hutang aktif" : "Belum ada yang lunas"}</b>${tab === "aktif" ? "Tekan Tambah hutang untuk mulai mencatat." : "Hutang yang sudah lunas akan muncul di sini."}</div>`;
 
   $("#dlLender").innerHTML = [...new Set(debts.map(d => d.lender))].map(v => `<option value="${esc(v)}">`).join("");
 
@@ -830,6 +945,7 @@ async function ensureProfile(user, name) {
 
 function showApp(u) {
   uid = u.uid;
+  budget = LS.get(PRIO_KEY(uid)) || 0;
   me = u;
   $("#login").classList.add("hidden");
   $("#app").classList.remove("hidden");
@@ -892,6 +1008,8 @@ document.addEventListener("click", e => {
   const t = e.target.closest("button");
   if (!t) return;
   if (t.dataset.auth) setAuthMode(t.dataset.auth);
+  else if (t.dataset.listall !== undefined) { listOpen[tab] = !listOpen[tab]; renderAll(); }
+  else if (t.dataset.prioall !== undefined) { prioOpen = !prioOpen; renderPrioBody(); }
   else if (t.dataset.add !== undefined) location.href = base + "tambah/";
   else if (t.dataset.open) location.href = base + "detail/?id=" + encodeURIComponent(t.dataset.open);
   else if (t.dataset.close) $("#" + t.dataset.close).close();
@@ -929,6 +1047,7 @@ document.addEventListener("input", e => {
   if (el.classList.contains("sch") && !el.readOnly) {
     $("#fTotal").value = fmt([...document.querySelectorAll(".sch")].reduce((a, i) => a + numOf(i), 0));
   }
+  if (el.id === "budget") setBudget(numOf(el));
   if (el.id === "fPrincipal" || el.classList.contains("sch")) renderSum();
 });
 $("#fUnit").onchange = () => { unitLabel(); buildSched(); };
@@ -1155,4 +1274,4 @@ if (configured) {
   $("#login").classList.remove("hidden");
 }
 
-setInterval(() => { if (uid && loaded && !document.querySelector("dialog[open]")) renderAll(); }, 60000);
+setInterval(() => { if (uid && loaded && !document.querySelector("dialog[open]") && document.activeElement?.id !== "budget") renderAll(); }, 60000);
