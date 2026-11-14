@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>Halaman tidak ditemukan - Clearlynote</title>
+<title>Page not found - Clearlynote</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,9 +29,20 @@ a:focus-visible{outline:3px solid #C58B2B;outline-offset:2px}
 <main class="card">
   <img class="logo" src="/logo_clearlynote.svg" alt="" width="56" height="56">
   <div class="code">404</div>
-  <h1>Halaman tidak ditemukan</h1>
-  <p>Alamat yang kamu buka tidak ada atau sudah dipindah. Balik ke catatan hutangmu aja.</p>
-  <a href="/">Kembali ke Clearlynote</a>
+  <h1 data-t="h">Page not found</h1>
+  <p data-t="p">The address you opened doesn't exist or has been moved. Head back to your debt notes.</p>
+  <a href="/" data-t="a">Back to Clearlynote</a>
 </main>
+<script>
+(function(){
+var L="en";
+try{L=JSON.parse(localStorage.getItem("clearly:lang"))==="id"?"id":"en"}catch(e){}
+if(L!=="id")return;
+var T={h:"Halaman tidak ditemukan",p:"Alamat yang kamu buka tidak ada atau sudah dipindah. Balik ke catatan hutangmu aja.",a:"Kembali ke Clearlynote"};
+document.documentElement.lang="id";
+document.title="Halaman tidak ditemukan - Clearlynote";
+document.querySelectorAll("[data-t]").forEach(function(el){el.textContent=T[el.dataset.t]});
+})();
+</script>
 </body>
 </html>
